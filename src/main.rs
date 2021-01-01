@@ -1,26 +1,16 @@
 use argh::FromArgs;
 use eyre::{eyre, Report};
-use linux_embedded_hal::{i2cdev::linux::LinuxI2CError, I2cdev};
+use linux_embedded_hal::{I2cdev};
 use si5351;
 use si5351::{Si5351, Si5351Device};
-use std::error::Error;
 
 #[derive(FromArgs)]
 #[argh(description = "set Adafruit Si5351 module frequency")]
 struct InputArgs {
     #[argh(positional)]
     bus: String,
-    #[argh(positional, from_str_fn(from_base_16))]
-    addr: u8,
     #[argh(positional, from_str_fn(from_base_10))]
     freq: u32,
-}
-
-fn from_base_16(val: &str) -> Result<u8, String> {
-    match u8::from_str_radix(val, 16) {
-        Ok(v) => Ok(v),
-        Err(_) => Err("Unable to convert address from base 16".into()),
-    }
 }
 
 fn from_base_10(val: &str) -> Result<u32, String> {
