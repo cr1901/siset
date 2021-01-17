@@ -10,10 +10,10 @@ struct InputArgs {
     #[argh(switch, short = 'q')]
     quiet: bool,
     /// output clock to set
-    #[argh(option, short='c', default = "default_clk()", from_str_fn(arg_clk))]
+    #[argh(option, short = 'c', default = "default_clk()", from_str_fn(arg_clk))]
     clk: si5351::ClockOutput,
     /// PLL to use to set output clock
-    #[argh(option, short='p', default = "default_pll()", from_str_fn(arg_pll))]
+    #[argh(option, short = 'p', default = "default_pll()", from_str_fn(arg_pll))]
     pll: si5351::PLL,
     #[argh(positional)]
     bus: String,
@@ -56,14 +56,14 @@ fn from_base_10(val: &str) -> Result<u32, String> {
 fn print_action_taken(clk: si5351::ClockOutput, freq: u32, pll: si5351::PLL) {
     let pll_str = match pll {
         si5351::PLL::A => "A",
-        si5351::PLL::B => "B"
+        si5351::PLL::B => "B",
     };
 
     let clk_str = match clk {
         si5351::ClockOutput::Clk0 => "0",
         si5351::ClockOutput::Clk1 => "1",
         si5351::ClockOutput::Clk2 => "2",
-        _ => unreachable!()
+        _ => unreachable!(),
     };
 
     println!("Clk {} set to {} Hz using PLL {}.", clk_str, freq, pll_str);
