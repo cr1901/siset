@@ -2,6 +2,7 @@ use argh::FromArgs;
 use eyre::Report;
 use linux_embedded_hal::I2cdev;
 use si5351::{Si5351, Si5351Device};
+use std::fmt;
 
 #[derive(FromArgs)]
 #[argh(description = "set Adafruit Si5351 module frequency")]
@@ -53,20 +54,42 @@ fn from_base_10(val: &str) -> Result<u32, String> {
     }
 }
 
-fn print_action_taken(clk: si5351::ClockOutput, freq: u32, pll: si5351::PLL) {
-    let pll_str = match pll {
-        si5351::PLL::A => "A",
-        si5351::PLL::B => "B",
-    };
+#[derive(Debug)]
+struct SisetClk(si5351::ClockOutput);
 
-    let clk_str = match clk {
-        si5351::ClockOutput::Clk0 => "0",
-        si5351::ClockOutput::Clk1 => "1",
-        si5351::ClockOutput::Clk2 => "2",
-        _ => unreachable!(),
-    };
+impl From<si5351::ClockOutput> for SisetClk {
+    fn from(clk: si5351::ClockOutput) -> Self {
+        SisetClk(clk)
+    }
+}
 
-    println!("Clk {} set to {} Hz using PLL {}.", clk_str, freq, pll_str);
+impl fmt::Display for SisetClk {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self.0 {
+            si5351::ClockOutput::Clk0 => write!(f, "0"),
+            si5351::ClockOutput::Clk1 => write!(f, "1"),
+            si5351::ClockOutput::Clk2 => write!(f, "2"),
+            _ => unreachable!(),
+        }
+    }
+}
+
+#[derive(Debug)]
+struct SisetPLL(si5351::PLL);
+
+impl From<si5351::PLL> for SisetPLL {
+    fn from(pll: si5351::PLL) -> Self {
+        SisetPLL(pll)
+    }
+}
+
+impl fmt::Display for SisetPLL {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self.0 {
+            si5351::PLL::A => write!(f, "A"),
+            si5351::PLL::B => write!(f, "B"),
+        }
+    }
 }
 
 fn main() -> eyre::Result<()> {
@@ -82,7 +105,12 @@ fn main() -> eyre::Result<()> {
         .map_err(Report::msg)?;
 
     if !args.quiet {
-        print_action_taken(args.clk, args.freq, args.pll);
+        println!(
+            "Clk {} set to {} Hz using PLL {}.",
+            SisetClk::from(args.clk),
+            args.freq,
+            SisetPLL::from(args.pll)
+        );
     }
     Ok(())
 }
