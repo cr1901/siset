@@ -6,6 +6,9 @@ use si5351::{Si5351, Si5351Device};
 #[derive(FromArgs)]
 #[argh(description = "set Adafruit Si5351 module frequency")]
 struct InputArgs {
+    /// suppress message indicating action taken
+    #[argh(switch, short = 'q')]
+    quiet: bool,
     /// output clock to set
     #[argh(option, short='c', default = "default_clk()", from_str_fn(arg_clk))]
     clk: si5351::ClockOutput,
@@ -78,6 +81,8 @@ fn main() -> eyre::Result<()> {
         .set_frequency(args.pll, args.clk, args.freq)
         .map_err(Report::msg)?;
 
-    print_action_taken(args.clk, args.freq, args.pll);
+    if !args.quiet {
+        print_action_taken(args.clk, args.freq, args.pll);
+    }
     Ok(())
 }
