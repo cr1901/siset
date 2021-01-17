@@ -1,7 +1,6 @@
 use argh::FromArgs;
-use eyre::{eyre, Report};
-use linux_embedded_hal::{I2cdev};
-use si5351;
+use eyre::Report;
+use linux_embedded_hal::I2cdev;
 use si5351::{Si5351, Si5351Device};
 
 #[derive(FromArgs)]
@@ -20,25 +19,17 @@ fn from_base_10(val: &str) -> Result<u32, String> {
     }
 }
 
-fn wrap_si_error(si_error: si5351::Error) -> Report {
-    let wrap_err = match si_error {
-        si5351::Error::CommunicationError => eyre!("Communication Error"),
-        si5351::Error::InvalidParameter => eyre!("Invalid Parameter"),
-    };
-    return From::from(wrap_err);
-}
-
 fn main() -> eyre::Result<()> {
     let args: InputArgs = argh::from_env();
 
     let i2c: I2cdev = I2cdev::new(args.bus)?;
 
     let mut clock = Si5351Device::<I2cdev>::new_adafruit_module(i2c);
-    clock.init_adafruit_module().map_err(wrap_si_error)?;
+    clock.init_adafruit_module().map_err(Report::msg)?;
 
     clock
         .set_frequency(si5351::PLL::A, si5351::ClockOutput::Clk0, args.freq)
-        .map_err(wrap_si_error)?;
+        .map_err(Report::msg)?;
 
     println!("PLL frequency of clk 0 set to {} Hz.", args.freq);
     Ok(())
