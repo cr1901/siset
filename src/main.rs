@@ -6,13 +6,29 @@ use si5351::{Si5351, Si5351Device};
 #[derive(FromArgs)]
 #[argh(description = "set Adafruit Si5351 module frequency")]
 struct InputArgs {
-    /// PLL to use to set output clock.
+    /// output clock to set
+    #[argh(option, short='c', default = "default_clk()", from_str_fn(arg_clk))]
+    clk: si5351::ClockOutput,
+    /// PLL to use to set output clock
     #[argh(option, short='p', default = "default_pll()", from_str_fn(arg_pll))]
     pll: si5351::PLL,
     #[argh(positional)]
     bus: String,
     #[argh(positional, from_str_fn(from_base_10))]
     freq: u32,
+}
+
+fn default_clk() -> si5351::ClockOutput {
+    si5351::ClockOutput::Clk0
+}
+
+fn arg_clk(val: &str) -> Result<si5351::ClockOutput, String> {
+    match val {
+        "0" => Ok(si5351::ClockOutput::Clk0),
+        "1" => Ok(si5351::ClockOutput::Clk1),
+        "2" => Ok(si5351::ClockOutput::Clk2),
+        _ => Err("PLL must be \"0\", \"1\", or \"2\"".into()),
+    }
 }
 
 fn default_pll() -> si5351::PLL {
@@ -59,9 +75,9 @@ fn main() -> eyre::Result<()> {
     clock.init_adafruit_module().map_err(Report::msg)?;
 
     clock
-        .set_frequency(args.pll, si5351::ClockOutput::Clk0, args.freq)
+        .set_frequency(args.pll, args.clk, args.freq)
         .map_err(Report::msg)?;
 
-    print_action_taken(si5351::ClockOutput::Clk0, args.freq, args.pll);
+    print_action_taken(args.clk, args.freq, args.pll);
     Ok(())
 }
