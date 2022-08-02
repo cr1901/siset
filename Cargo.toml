@@ -1,16 +1,24 @@
 [package]
 name = "siset"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["William D. Jones <thor0505@comcast.net>"]
-edition = "2018"
+edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-linux-embedded-hal = { version = "0.3.0", default_features = false }
-argh = "0.1.3"
+argh = "0.1.8"
+ehal-2 = { package = "embedded-hal", version = "0.2.7" }
+embedded-hal = "1.0.0-alpha.8"
+eyre = "0.6.8"
 si5351 = "0.2.0"
-eyre = "0.6.3"
+
+[dependencies.linux-embedded-hal]
+git = "https://github.com/kelnos/linux-embedded-hal"
+branch = "embedded-hal-1.0.0-alpha.8"
+version = "0.4.0-alpha.2"
+default_features = false
+features = ["i2c"] 
 
 [profile.release]
 opt-level = "s"

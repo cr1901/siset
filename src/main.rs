@@ -3,6 +3,9 @@ use eyre::Report;
 use linux_embedded_hal::I2cdev;
 use si5351::{Si5351, Si5351Device};
 use std::fmt;
+use ehal_2::blocking::i2c as i2c_old;
+use embedded_hal::i2c as i2c_new;
+
 
 #[derive(FromArgs)]
 #[argh(description = "set Adafruit Si5351 module frequency")]
@@ -92,12 +95,51 @@ impl fmt::Display for SisetPLL {
     }
 }
 
+struct I2cWrapper<T> where T: i2c_new::blocking::I2c {
+    inner: T
+}
+
+impl<T> I2cWrapper<T> where T: i2c_new::blocking::I2c {
+    fn new(inner: T) -> Self {
+        I2cWrapper { inner }
+    }
+}
+
+impl<T> i2c_old::Read for I2cWrapper<T> where T: i2c_new::blocking::I2c {
+    type Error = T::Error;
+
+    fn read(&mut self, address: u8, buffer: &mut [u8]) -> Result<(), Self::Error> {
+        self.inner.read(address, buffer)
+    }
+}
+
+impl<T> i2c_old::Write for I2cWrapper<T> where T: i2c_new::blocking::I2c {
+    type Error = T::Error;
+
+    fn write(&mut self, address: u8, bytes: &[u8]) -> Result<(), Self::Error> {
+        self.inner.write(address, bytes)
+    }
+}
+
+impl<T> i2c_old::WriteRead for I2cWrapper<T> where T: i2c_new::blocking::I2c {
+    type Error = T::Error;
+
+    fn write_read(
+        &mut self,
+        address: u8,
+        bytes: &[u8],
+        buffer: &mut [u8],
+    ) -> Result<(), Self::Error> {
+        self.inner.write_read(address, bytes, buffer)
+    }
+}
+
 fn main() -> eyre::Result<()> {
     let args: InputArgs = argh::from_env();
 
-    let i2c: I2cdev = I2cdev::new(args.bus)?;
+    let i2c = I2cWrapper::new(I2cdev::new(args.bus)?);
 
-    let mut clock = Si5351Device::<I2cdev>::new_adafruit_module(i2c);
+    let mut clock = Si5351Device::new_adafruit_module(i2c);
     clock.init_adafruit_module().map_err(Report::msg)?;
 
     clock
@@ -112,5 +154,6 @@ fn main() -> eyre::Result<()> {
             SisetPLL::from(args.pll)
         );
     }
+
     Ok(())
 }
